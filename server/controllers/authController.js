@@ -21,7 +21,34 @@ module.exports = {
       id: user.id
     };
     return res.status(201).send(req.session.user);
-  }
+  },
+
+  login: async (req,res) => {
+    const {username,password} = req.body;
+    const db = req.app.get('db')
+    const result = await db.get_user([username])
+    const foundUser = result[0]
+    const user = foundUser
+    if(!user){
+      return res.status(401).send('user not found, please register as a new use before logging in')
+    } 
+      const isAuthenicated = bcrypt.compareSync(password, user.hash)
+      if(isAuthenicated === false){
+      return  res.status(403).send('unauthorized')
+      }
+        req.session.user = {
+          isAdmin: user.is_admin,
+        username: user.username,
+        id: user.id
+        }
+       return res.status(200).send(req.session.user)
+      
+
+  },
+  logout: async (req,res) => {
+    req.session.destroy()
+    res.sendStatus(200)
+  } 
 };
 
 
